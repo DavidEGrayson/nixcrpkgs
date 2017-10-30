@@ -13,4 +13,6 @@ crossenv.make_derivation rec {
   builder = ./builder.sh;
 
   cross_inputs = [ libusbp ];
+
+  cml = ./CMakeLists.txt;
 }

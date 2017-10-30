@@ -40,12 +40,19 @@ let
     sha256 = "1fq0nki2118zwbc8rdkqx5i04lbfw7gqbsyf5bscg5im6sfphq1d";
   };
 
+  # Experimental version of CMake so we can work on fixing CMake bugs.
+  cmake_tmphax = import ./cmake {
+    native = native_base;
+  };
+
   native = native_base // {
     default_native_inputs = native_base.default_native_inputs ++ [
       # TODO: pkgconf (would cause a mass rebuild)
     ];
 
     inherit pkgconf wrappers gnu_config;
+
+    inherit cmake_tmphax;
 
     make_derivation = import ../make_derivation.nix native;
   };
