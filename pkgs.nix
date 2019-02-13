@@ -12,6 +12,10 @@ rec {
     inherit crossenv;
   };
 
+  hello_ko = import ./pkgs/hello_ko {
+    inherit crossenv;
+  };
+
   usbview = import ./pkgs/usbview {
     inherit crossenv;
   };
