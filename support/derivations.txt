@@ -16,6 +16,7 @@ omni.xorgproto
 {$windows}.gdb
 {$all}.hello
 {$all}.hello_cpp
+{$all}.libdvdread
 {$linux}.libudev
 {$all}.libusb
 {$all}.libusbp{,.examples}

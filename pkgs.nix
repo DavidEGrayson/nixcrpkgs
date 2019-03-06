@@ -20,8 +20,12 @@ rec {
     inherit crossenv;
   };
 
-  dvdbackup = import ./pkgs/dvdbackup {
+  libdvdread = import ./pkgs/libdvdread {
     inherit crossenv;
+  };
+
+  dvdbackup = import ./pkgs/dvdbackup {
+    inherit crossenv libdvdread;
   };
 
   pdcurses = import ./pkgs/pdcurses {
