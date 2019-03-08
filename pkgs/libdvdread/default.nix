@@ -10,7 +10,5 @@ crossenv.make_derivation rec {
     sha256 = "1gfmh8ii3s2fw1c8vn57piwxc0smd3va4h7xgp9s8g48cc04zki8";
   };
 
-  patches = [ ./paren-warning.patch ];
-
   builder = ./builder.sh;
 }

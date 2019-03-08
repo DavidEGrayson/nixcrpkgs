@@ -3,10 +3,6 @@ source $setup
 tar -xf $src
 mv libdvdread-* libdvdread
 cd libdvdread
-for patch in $patches; do
-  echo applying patch $patch
-  patch -p1 -i $patch
-done
 mv msvc xxx
 mv xxx/msvc .
 rmdir xxx
