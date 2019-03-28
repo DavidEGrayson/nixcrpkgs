@@ -16,8 +16,7 @@ OutDir = Pathname(ENV.fetch('out'))
 OutPcDir = OutDir + 'lib' + 'pkgconfig'
 CMakeDir = OutDir + 'lib' + 'cmake'
 OutIncDir = OutDir + 'include'
-MocExe = OutDir + 'bin' + 'moc'
-RccExe = OutDir + 'bin' + 'rcc'
+BinDir = OutDir + 'bin'
 
 DepGraph = {}
 DepGraphBack = {}
@@ -40,6 +39,16 @@ end
 # purely transitive.
 def make_dep_graph
   # High-level dependencies.
+  add_dep 'Qt5OpenGL.x', 'libQt5OpenGL.a'
+  add_dep 'Qt5OpenGL.x', 'Qt5WidgetsNoPlugins.x'
+  add_dep 'Qt5Network.x', 'libQt5Network.a'
+  add_dep 'Qt5Network.x', 'Qt5Core.x'
+  add_dep 'Qt5Concurrent.x', 'libQt5Concurrent.a'
+  add_dep 'Qt5Concurrent.x', 'Qt5Core.x'
+  add_dep 'Qt5Xml.x', 'libQt5Xml.a'
+  add_dep 'Qt5Xml.x', 'Qt5Xml.x'
+  add_dep 'Qt5Test.x', 'libQt5Test.a'
+  add_dep 'Qt5Test.x', 'Qt5Text.x'
   add_dep 'Qt5Widgets.x', 'Qt5WidgetsNoPlugins.x'
   add_dep 'Qt5WidgetsNoPlugins.x', 'libQt5Widgets.a'
   add_dep 'Qt5WidgetsNoPlugins.x', 'Qt5Gui.x'
@@ -289,7 +298,7 @@ end
 # Note: It would be nice to find some solution so that Qt5Widgets.pc does not
 # require Qt5GuiNoPlugins, since it already requires Qt5Gui.
 def flatten_deps_for_pc_file(pc_file)
-  flatten_deps(DepGraph[pc_file]) do |dep|
+  flatten_deps(DepGraph.fetch(pc_file)) do |dep|
     deps = case determine_dep_type(dep)
            when :x, :pc then
              # Don't expand dependencies for a .pc file because we can just
@@ -308,7 +317,7 @@ def flatten_deps_for_pc_file(pc_file)
 end
 
 def flatten_deps_for_cmake_file(cmake_file)
-  flatten_deps(DepGraph[cmake_file]) do |dep|
+  flatten_deps(DepGraph.fetch(cmake_file)) do |dep|
     DepGraph.fetch(dep)
   end
 end
@@ -430,31 +439,39 @@ end
 
 def create_cmake_core_files
   File.open(CMakeDir + 'core.cmake', 'w') do |f|
+    f.puts "include_guard()"
+    f.puts
+
     f.puts "set(QT_VERSION_MAJOR #{QtVersionMajor})"
     f.puts
 
-    f.puts "set(QT_MOC_EXECUTABLE #{MocExe})"
     f.puts "add_executable(Qt5::moc IMPORTED)"
-    f.puts "set_target_properties(Qt5::moc PROPERTIES " \
-           "IMPORTED_LOCATION ${QT_MOC_EXECUTABLE})"
-    f.puts
+    f.puts "set_target_properties(Qt5::moc PROPERTIES"
+    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'moc'}\")"
+    f.puts "set(Qt5Core_MOC_EXECUTABLE Qt5::moc)"
+
+    f.puts "add_executable(Qt5::qmake IMPORTED)"
+    f.puts "set_target_properties(Qt5::qmake PROPERTIES "
+    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'qmake'}\")"
+    f.puts "set(Qt5Core_QMAKE_EXECUTABLE Qt5::qmake)"
 
     f.puts "add_executable(Qt5::rcc IMPORTED)"
-    f.puts "set_target_properties(Qt5::rcc PROPERTIES " \
-           "IMPORTED_LOCATION #{RccExe})"
+    f.puts "set_target_properties(Qt5::rcc PROPERTIES "
+    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'rcc'}\")"
     f.puts "set(Qt5Core_RCC_EXECUTABLE Qt5::rcc)"
-    f.puts
 
     f.write File.read(ENV.fetch('core_macros'))
   end
 end
 
-def create_cmake_qt5widgets
-  mkdir CMakeDir + 'Qt5Widgets'
+def create_cmake_config(subname)
+  name = "Qt5#{subname}"
 
-  widgets_a = find_qt_library('libQt5Widgets.a') || raise
+  mkdir CMakeDir + name
 
-  deps = flatten_deps_for_cmake_file('Qt5Widgets.x')
+  a_file = find_qt_library("lib#{name}.a") || raise
+
+  deps = flatten_deps_for_cmake_file("#{name}.x")
 
   incdirs = []
   libdirflags = []
@@ -481,15 +498,66 @@ def create_cmake_qt5widgets
     end
   end
 
-  File.open(CMakeDir + 'Qt5Widgets' + 'Qt5WidgetsConfig.cmake', 'w') do |f|
-    import_static_lib f, 'Qt5::Widgets',
-      IMPORTED_LOCATION: widgets_a,
+  File.open(CMakeDir + name + "#{name}Config.cmake", 'w') do |f|
+    f.puts "include_guard()"
+
+    import_static_lib f, "Qt5::#{subname}",
+      IMPORTED_LOCATION: a_file,
       IMPORTED_LINK_INTERFACE_LANGUAGES: 'CXX',
       INTERFACE_LINK_LIBRARIES: libdirflags.reverse.uniq + ldflags.reverse,
       INTERFACE_INCLUDE_DIRECTORIES: incdirs,
       INTERFACE_COMPILE_DEFINITIONS: 'QT_STATIC'
 
     f.puts "include(#{CMakeDir + 'core.cmake'})"
+  end
+end
+
+def create_cmake_main_config
+  mkdir CMakeDir + 'Qt5'
+
+  File.open(CMakeDir + 'Qt5' + 'Qt5Config.cmake', 'w') do |f|
+    f.puts <<END
+include_guard()
+
+if (NOT Qt5_FIND_COMPONENTS)
+  set (Qt5_NOT_FOUND_MESSAGE "The Qt5 package requires at least one component")
+  set (Qt5_FOUND False)
+  return ()
+endif ()
+
+set (_Qt5_FIND_PARTS_REQUIRED)
+if (Qt5_FIND_REQUIRED)
+  set (_Qt5_FIND_PARTS_REQUIRED REQUIRED)
+endif ()
+set (_Qt5_FIND_PARTS_QUIET)
+if (Qt5_FIND_QUIETLY)
+  set (_Qt5_FIND_PARTS_QUIET QUIET)
+endif ()
+
+set (_qt5_install_prefix "#{OutDir}")
+
+set (_Qt5_NOTFOUND_MESSAGE)
+
+foreach (module ${Qt5_FIND_COMPONENTS})
+  find_package (Qt5${module}
+    ${_Qt5_FIND_PARTS_QUIET}
+    ${_Qt5_FIND_PARTS_REQUIRED}
+    PATHS ${_qt5_install_prefix} NO_DEFAULT_PATH
+  )
+  if (NOT Qt5${module}_FOUND)
+    if (Qt5_FIND_REQUIRED_${module})
+      set (_Qt5_NOTFOUND_MESSAGE "${_Qt5_NOTFOUND_MESSAGE}Failed to find Qt5 component \\"${module}\\" config file.\\n")
+    elseif (NOT Qt5_FIND_QUIETLY)
+      message(WARNING "Could not find Qt5 component \\"${module}\\" config file.")
+    endif ()
+  endif()
+endforeach()
+
+if (_Qt5_NOTFOUND_MESSAGE)
+  set(Qt5_NOT_FOUND_MESSAGE "${_Qt5_NOTFOUND_MESSAGE}")
+  set(Qt5_FOUND False)
+endif()
+END
   end
 end
 
@@ -514,7 +582,15 @@ def main
 
   mkdir CMakeDir
   create_cmake_core_files
-  create_cmake_qt5widgets
+  create_cmake_config('Core')
+  create_cmake_config('Concurrent')
+  create_cmake_config('Gui')
+  create_cmake_config('Network')
+  create_cmake_config('OpenGL')
+  create_cmake_config('Test')
+  create_cmake_config('Widgets')
+  create_cmake_config('Xml')
+  create_cmake_main_config
 end
 
 main

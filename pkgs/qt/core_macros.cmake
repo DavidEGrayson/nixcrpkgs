@@ -104,3 +104,96 @@ function(QT5_ADD_RESOURCES outfiles )
   endforeach()
   set(${outfiles} ${${outfiles}} PARENT_SCOPE)
 endfunction()
+
+# qt5_create_moc_command
+function(QT5_CREATE_MOC_COMMAND infile outfile moc_flags moc_options moc_target moc_depends)
+    get_filename_component(_moc_outfile_name "${outfile}" NAME)
+    get_filename_component(_moc_outfile_dir "${outfile}" PATH)
+    if(_moc_outfile_dir)
+        set(_moc_working_dir WORKING_DIRECTORY ${_moc_outfile_dir})
+    endif()
+    set (_moc_parameters_file ${outfile}_parameters)
+    set (_moc_parameters ${moc_flags} ${moc_options} -o "${outfile}" "${infile}")
+    string (REPLACE ";" "\n" _moc_parameters "${_moc_parameters}")
+
+    if(moc_target)
+        set(_moc_parameters_file ${_moc_parameters_file}$<$<BOOL:$<CONFIGURATION>>:_$<CONFIGURATION>>)
+        set(targetincludes "$<TARGET_PROPERTY:${moc_target},INCLUDE_DIRECTORIES>")
+        set(targetdefines "$<TARGET_PROPERTY:${moc_target},COMPILE_DEFINITIONS>")
+
+        set(targetincludes "$<$<BOOL:${targetincludes}>:-I$<JOIN:${targetincludes},\n-I>\n>")
+        set(targetdefines "$<$<BOOL:${targetdefines}>:-D$<JOIN:${targetdefines},\n-D>\n>")
+
+        file (GENERATE
+            OUTPUT ${_moc_parameters_file}
+            CONTENT "${targetdefines}${targetincludes}${_moc_parameters}\n"
+        )
+
+        set(targetincludes)
+        set(targetdefines)
+    else()
+        file(WRITE ${_moc_parameters_file} "${_moc_parameters}\n")
+    endif()
+
+    set(_moc_extra_parameters_file @${_moc_parameters_file})
+    add_custom_command(OUTPUT ${outfile}
+                       COMMAND ${Qt5Core_MOC_EXECUTABLE} ${_moc_extra_parameters_file}
+                       DEPENDS ${infile} ${moc_depends}
+                       ${_moc_working_dir}
+                       VERBATIM)
+    set_source_files_properties(${infile} PROPERTIES SKIP_AUTOMOC ON)
+    set_source_files_properties(${outfile} PROPERTIES SKIP_AUTOMOC ON)
+    set_source_files_properties(${outfile} PROPERTIES SKIP_AUTOUIC ON)
+endfunction()
+
+# qt5_get_moc_flags
+macro(QT5_GET_MOC_FLAGS _moc_flags)
+  set(${_moc_flags})
+  get_directory_property(_inc_DIRS INCLUDE_DIRECTORIES)
+
+  if(CMAKE_INCLUDE_CURRENT_DIR)
+    list(APPEND _inc_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+
+  foreach(_current ${_inc_DIRS})
+    if("${_current}" MATCHES "\\.framework/?$")
+      string(REGEX REPLACE "/[^/]+\\.framework" "" framework_path "${_current}")
+      set(${_moc_flags} ${${_moc_flags}} "-F${framework_path}")
+     else()
+      set(${_moc_flags} ${${_moc_flags}} "-I${_current}")
+    endif()
+  endforeach()
+
+  get_directory_property(_defines COMPILE_DEFINITIONS)
+  foreach(_current ${_defines})
+    set(${_moc_flags} ${${_moc_flags}} "-D${_current}")
+  endforeach()
+
+  if(WIN32)
+    set(${_moc_flags} ${${_moc_flags}} -DWIN32)
+  endif()
+endmacro()
+
+# qt5_wrap_cpp
+function(QT5_WRAP_CPP outfiles )
+    qt5_get_moc_flags(moc_flags)
+
+    set(options)
+    set(oneValueArgs TARGET)
+    set(multiValueArgs OPTIONS DEPENDS)
+
+    cmake_parse_arguments(_WRAP_CPP "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    set(moc_files ${_WRAP_CPP_UNPARSED_ARGUMENTS})
+    set(moc_options ${_WRAP_CPP_OPTIONS})
+    set(moc_target ${_WRAP_CPP_TARGET})
+    set(moc_depends ${_WRAP_CPP_DEPENDS})
+
+    foreach(it ${moc_files})
+        get_filename_component(it ${it} ABSOLUTE)
+        qt5_make_output_file(${it} moc_ cpp outfile)
+        qt5_create_moc_command(${it} ${outfile} "${moc_flags}" "${moc_options}" "${moc_target}" "${moc_depends}")
+        list(APPEND ${outfiles} ${outfile})
+    endforeach()
+    set(${outfiles} ${${outfiles}} PARENT_SCOPE)
+endfunction()
