@@ -29,8 +29,10 @@ let
         else crossenv.compiler;
     in "${os_code}-${compiler_code}";
 
+  submodules_url = "https://download.qt.io/official_releases/qt/5.12/${version}/submodules";
+
   base_src = crossenv.nixpkgs.fetchurl {
-    url = "https://download.qt.io/official_releases/qt/5.12/${version}/submodules/qtbase-everywhere-src-${version}.tar.xz";
+    url = "${submodules_url}/qtbase-everywhere-src-${version}.tar.xz";
     sha256 = "0jch3iqdbhab6sizvq43rx87k43r962b6k12drbqi2b70b77hc2k";
   };
 
@@ -109,13 +111,13 @@ let
           "-device-option QMAKE_XCODE_VERSION=10.0"
         else "" );
 
-     cross_inputs =
-       if crossenv.os == "linux" then [
-           libudev  # not sure if this helps, but Qt does look for it
-           libxall
-           at-spi2-headers  # for accessibility
-         ]
-       else [];
+    cross_inputs =
+      if crossenv.os == "linux" then [
+        libudev  # not sure if this helps, but Qt does look for it
+        libxall
+        at-spi2-headers  # for accessibility
+      ]
+      else [];
   };
 
   # This wrapper aims to make Qt easier to use by generating CMake package files
@@ -141,6 +143,18 @@ let
     builder = ./examples_builder.sh;
   };
 
+  svg = crossenv.make_derivation {
+    name = "qtsvg-${version}";
+    src = crossenv.nixpkgs.fetchurl {
+      url = "${submodules_url}/qtsvg-everywhere-src-${version}.tar.xz";
+      sha256 = "1j337xw5zykx4im3588zw9f9jshhd2apaczz9smga1icsd2gghav";
+    };
+    qtbase_raw = base_raw;
+    PATH = "${base}/bin";
+    cross_inputs = [ base ];
+    builder = ./svg_builder.sh;
+  };
+
   license_fragment = crossenv.native.make_derivation {
     name = "qtbase-${version}-license-fragment";
     inherit version;
@@ -164,6 +178,7 @@ in
     inherit base_src;
     inherit base_raw;
     inherit base;
+    inherit svg;
     inherit examples;
     inherit license_set;
   }
