@@ -1,4 +1,4 @@
-{ crossenv }:
+{ crossenv, libdvdread }:
 
 crossenv.make_derivation rec {
   name = "dvdbackup-${version}";
@@ -11,4 +11,6 @@ crossenv.make_derivation rec {
   };
 
   builder = ./builder.sh;
+
+  cross_inputs = [ libdvdread ];
 }
