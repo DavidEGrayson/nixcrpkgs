@@ -129,6 +129,7 @@ let
     os = crossenv.os;
     qtbase = base_raw;
     cross_inputs = base_raw.cross_inputs;
+    RUBYLIB = ./ruby;
     builder.ruby = ./wrapper_builder.rb;
     core_macros = ./core_macros.cmake;
   };

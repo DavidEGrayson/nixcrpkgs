@@ -1,10 +1,6 @@
-require 'pathname'
-require 'fileutils'
-include FileUtils
-
 STDOUT.sync = true
-
 ENV['PATH'] = ENV.fetch('_PATH')
+require 'wrapper_helpers'
 
 Os = ENV.fetch('os')
 QtVersionString = ENV.fetch('version')
