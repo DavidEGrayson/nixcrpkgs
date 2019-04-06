@@ -6,7 +6,7 @@ mv qtsvg-* qtsvg
 mkdir build
 cd build
 
-qmake ../qtsvg/qtsvg.pro QT_INSTALL_EXAMPLES=/foobar
+qmake ../qtsvg/qtsvg.pro
 make
 make install INSTALL_ROOT=$PWD/root
 ls root

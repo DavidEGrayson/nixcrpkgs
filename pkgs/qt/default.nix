@@ -144,16 +144,29 @@ let
     builder = ./examples_builder.sh;
   };
 
-  svg = crossenv.make_derivation {
-    name = "qtsvg-${version}";
+  submodule = { name, src, builder, wrapper_builder }:
+    crossenv.make_derivation {
+      name = "${name}-${version}";
+      builder.ruby = wrapper_builder;
+      os = crossenv.os;
+      RUBYLIB = ./ruby;
+      raw = crossenv.make_derivation {
+        name = "${name}-raw-${version}";
+        inherit src builder;
+        qtbase_raw = base_raw;
+        PATH = "${base}/bin";
+        cross_inputs = [ base ];
+      };
+    };
+
+  svg = submodule {
+    name = "qtsvg";
     src = crossenv.nixpkgs.fetchurl {
       url = "${submodules_url}/qtsvg-everywhere-src-${version}.tar.xz";
       sha256 = "1j337xw5zykx4im3588zw9f9jshhd2apaczz9smga1icsd2gghav";
     };
-    qtbase_raw = base_raw;
-    PATH = "${base}/bin";
-    cross_inputs = [ base ];
     builder = ./svg_builder.sh;
+    wrapper_builder = ./svg_wrapper_builder.rb;
   };
 
   license_fragment = crossenv.native.make_derivation {
