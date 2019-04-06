@@ -31,15 +31,13 @@ let
 
   submodules_url = "https://download.qt.io/official_releases/qt/5.12/${version}/submodules";
 
-  base_src = crossenv.nixpkgs.fetchurl {
-    url = "${submodules_url}/qtbase-everywhere-src-${version}.tar.xz";
-    sha256 = "0jch3iqdbhab6sizvq43rx87k43r962b6k12drbqi2b70b77hc2k";
-  };
-
   base_raw = crossenv.make_derivation {
     name = "qtbase-raw-${version}";
     inherit version;
-    src = base_src;
+    src = crossenv.nixpkgs.fetchurl {
+      url = "${submodules_url}/qtbase-everywhere-src-${version}.tar.xz";
+      sha256 = "0jch3iqdbhab6sizvq43rx87k43r962b6k12drbqi2b70b77hc2k";
+    };
     builder = ./builder.sh;
 
     patches = [
@@ -127,7 +125,7 @@ let
   base = crossenv.make_derivation {
     inherit version name;
     os = crossenv.os;
-    qtbase = base_raw;
+    raw = base_raw;
     cross_inputs = base_raw.cross_inputs;
     RUBYLIB = ./ruby;
     builder.ruby = ./wrapper_builder.rb;
@@ -145,11 +143,7 @@ let
   };
 
   submodule = { name, src, builder, wrapper_builder }:
-    crossenv.make_derivation {
-      name = "${name}-${version}";
-      builder.ruby = wrapper_builder;
-      os = crossenv.os;
-      RUBYLIB = ./ruby;
+    let
       raw = crossenv.make_derivation {
         name = "${name}-raw-${version}";
         inherit src builder;
@@ -157,7 +151,15 @@ let
         PATH = "${base}/bin";
         cross_inputs = [ base ];
       };
-    };
+    in
+      crossenv.make_derivation {
+        name = "${name}-${version}";
+        builder.ruby = wrapper_builder;
+        os = crossenv.os;
+        RUBYLIB = ./ruby;
+        cross_inputs = raw.cross_inputs;
+        inherit raw;
+      };
 
   svg = submodule {
     name = "qtsvg";
@@ -172,7 +174,7 @@ let
   license_fragment = crossenv.native.make_derivation {
     name = "qtbase-${version}-license-fragment";
     inherit version;
-    src = base_src;
+    src = base.src;
     builder = ./license_builder.sh;
   };
 
@@ -189,8 +191,6 @@ let
 in
   base // {
     recurseForDerivations = true;
-    inherit base_src;
-    inherit base_raw;
     inherit base;
     inherit svg;
     inherit examples;

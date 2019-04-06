@@ -6,7 +6,7 @@ Os = ENV.fetch('os')
 QtVersionString = ENV.fetch('version')
 QtVersionMajor = QtVersionString.split('.').first.to_i
 
-QtBaseDir = Pathname(ENV.fetch('qtbase'))
+RawDir = Pathname(ENV.fetch('raw'))
 
 OutDir = Pathname(ENV.fetch('out'))
 OutPcDir = OutDir + 'lib' + 'pkgconfig'
@@ -560,14 +560,14 @@ end
 def main
   # Symlink the include, bin, and plugins directories into $out.
   mkdir OutDir
-  ln_s QtBaseDir + 'include', OutDir + 'include'
-  ln_s QtBaseDir + 'bin', OutDir + 'bin'
-  ln_s QtBaseDir + 'plugins', OutDir + 'plugins'
-  ln_s QtBaseDir + 'src', OutDir + 'src'
+  ln_s RawDir + 'include', OutDir + 'include'
+  ln_s RawDir + 'bin', OutDir + 'bin'
+  ln_s RawDir + 'plugins', OutDir + 'plugins'
+  ln_s RawDir + 'src', OutDir + 'src'
 
   # Symlink the .a files and copy the .prl files into $out/lib.
   mkdir OutDir + 'lib'
-  (QtBaseDir + 'lib').each_child do |c|
+  (RawDir + 'lib').each_child do |c|
     ln_s c, OutDir + 'lib' if c.extname == '.a'
     cp c, OutDir + 'lib' if c.extname == '.prl'
   end
