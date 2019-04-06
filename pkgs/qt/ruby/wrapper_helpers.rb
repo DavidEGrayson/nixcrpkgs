@@ -17,11 +17,6 @@ BinDir = OutDir + 'bin'
 DepGraph = {}
 DepGraphBack = {}
 
-DepInfo = {}
-DepInfo.default_proc = proc do |hash, name|
-  hash[name] = find_dep_info(name)
-end
-
 case Os
 when "windows"
   PrlPrefix = ''
@@ -69,7 +64,7 @@ def determine_dep_type(name)
   end
 end
 
-def find_pkg_config_file(name)
+def find_pc_file(name)
   ENV.fetch('PKG_CONFIG_CROSS_PATH').split(':').each do |dir|
     path = Pathname(dir) + name
     return path if path.exist?
@@ -77,30 +72,18 @@ def find_pkg_config_file(name)
   nil
 end
 
-def find_qt_library(name)
-  debug_name = Pathname(name).sub_ext("d.a").to_s
-
-  search_dirs = [ OutDir + 'lib' ] +
-    (OutDir + 'plugins').children
-
+def find_file(search_dirs, name)
   search_dirs.each do |dir|
     lib = dir + name
     return lib if lib.exist?
   end
-
-  search_dirs.each do |dir|
-    lib = dir + debug_name
-    return lib if lib.exist?
-  end
-
   nil
 end
 
-def find_dep_info(name)
-  case determine_dep_type(name)
-  when :a then find_qt_library(name)
-  when :pc then find_pkg_config_file(name)
-  end
+def find_qt_library(name)
+  debug_name = Pathname(name).sub_ext("d.a").to_s
+  search_dirs = [ OutDir + 'lib' ] + (OutDir + 'plugins').children
+  find_file(search_dirs, name) || find_file(search_dirs, debug_name)
 end
 
 # Given an array of dependencies and a block for retrieving dependencies of an
@@ -181,7 +164,7 @@ def create_pc_file(name)
     dep = dep.dup
     case determine_dep_type(dep)
     when :a then
-      full_path = DepInfo[dep]
+      full_path = find_qt_library(dep)
       raise "Could not find library: #{dep}" if !full_path
       libdir = full_path.dirname.to_s
       libdir.sub!((OutDir + 'lib').to_s, '${libdir}')
@@ -234,7 +217,7 @@ end
 # For .pc files we depend on, add symlinks to the .pc file and any other .pc
 # files in the same directory which might be transitive dependencies.
 def symlink_pc_file_closure(name)
-  dep_pc_dir = DepInfo[name].dirname
+  dep_pc_dir = find_pc_file(name).dirname
   dep_pc_dir.each_child do |target|
     link = OutPcDir + target.basename
 
@@ -327,7 +310,7 @@ def create_cmake_config(subname)
     dep = dep.dup
     case determine_dep_type(dep)
     when :a then
-      full_path = DepInfo[dep]
+      full_path = find_qt_library(dep)
       raise "Could not find library: #{dep}" if !full_path
       libdir = full_path.dirname.to_s
       libname = full_path.basename.to_s
