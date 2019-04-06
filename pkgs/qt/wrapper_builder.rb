@@ -196,36 +196,18 @@ END
   end
 end
 
-def main
-  # Symlink the include, bin, and plugins directories into $out.
-  mkdir OutDir
-  ln_s RawDir + 'include', OutDir + 'include'
-  ln_s RawDir + 'bin', OutDir + 'bin'
-  ln_s RawDir + 'plugins', OutDir + 'plugins'
-  ln_s RawDir + 'src', OutDir + 'src'
+make_dep_graph
 
-  # Symlink the .a files and copy the .prl files into $out/lib.
-  mkdir OutDir + 'lib'
-  (RawDir + 'lib').each_child do |c|
-    ln_s c, OutDir + 'lib' if c.extname == '.a'
-    cp c, OutDir + 'lib' if c.extname == '.prl'
-  end
+generate_output
 
-  make_dep_graph
+create_cmake_core_files
+create_cmake_config('Core')
+create_cmake_config('Concurrent')
+create_cmake_config('Gui')
+create_cmake_config('Network')
+create_cmake_config('OpenGL')
+create_cmake_config('Test')
+create_cmake_config('Widgets')
+create_cmake_config('Xml')
+create_cmake_main_config
 
-  create_pc_files
-
-  mkdir CMakeDir
-  create_cmake_core_files
-  create_cmake_config('Core')
-  create_cmake_config('Concurrent')
-  create_cmake_config('Gui')
-  create_cmake_config('Network')
-  create_cmake_config('OpenGL')
-  create_cmake_config('Test')
-  create_cmake_config('Widgets')
-  create_cmake_config('Xml')
-  create_cmake_main_config
-end
-
-main

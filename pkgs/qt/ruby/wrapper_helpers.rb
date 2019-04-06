@@ -341,3 +341,23 @@ def create_cmake_config(subname)
     f.puts "include(#{CMakeDir + 'core.cmake'})"
   end
 end
+
+def generate_output
+  # Symlink the include, bin, and plugins directories into $out.
+  mkdir OutDir
+  ln_s RawDir + 'include', OutDir + 'include'
+  ln_s RawDir + 'bin', OutDir + 'bin'
+  ln_s RawDir + 'plugins', OutDir + 'plugins'
+  ln_s RawDir + 'src', OutDir + 'src'
+
+  # Symlink the .a files and copy the .prl files into $out/lib.
+  mkdir OutDir + 'lib'
+  (RawDir + 'lib').each_child do |c|
+    ln_s c, OutDir + 'lib' if c.extname == '.a'
+    cp c, OutDir + 'lib' if c.extname == '.prl'
+  end
+
+  create_pc_files
+
+  mkdir CMakeDir
+end
