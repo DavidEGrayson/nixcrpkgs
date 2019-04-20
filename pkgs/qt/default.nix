@@ -146,7 +146,7 @@ let
     let
       raw = crossenv.make_derivation {
         name = "${name}-raw-${version}";
-        inherit src builder;
+        inherit src builder version;
         qtbase_raw = base_raw;
         PATH = "${base}/bin";
         cross_inputs = [ base ];
@@ -154,11 +154,11 @@ let
     in
       crossenv.make_derivation {
         name = "${name}-${version}";
+        inherit raw version;
         builder.ruby = wrapper_builder;
         os = crossenv.os;
         RUBYLIB = ./ruby;
         cross_inputs = raw.cross_inputs;
-        inherit raw;
       };
 
   svg = submodule {

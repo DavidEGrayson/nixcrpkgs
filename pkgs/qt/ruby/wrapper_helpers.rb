@@ -10,7 +10,7 @@ RawDir = Pathname(ENV.fetch('raw'))
 
 OutDir = Pathname(ENV.fetch('out'))
 OutPcDir = OutDir + 'lib' + 'pkgconfig'
-CMakeDir = OutDir + 'lib' + 'cmake'
+OutCMakeDir = OutDir + 'lib' + 'cmake'
 OutIncDir = OutDir + 'include'
 BinDir = OutDir + 'bin'
 
@@ -267,39 +267,18 @@ def import_static_lib(f, target_name, properties)
   set_properties(f, target_name, properties)
 end
 
-def create_cmake_core_files
-  File.open(CMakeDir + 'core.cmake', 'w') do |f|
-    f.puts "include_guard()"
-    f.puts
+def create_cmake_config(name)
+  name = name.gsub(/\..*/, '')  # remove .x extension
 
-    f.puts "set(QT_VERSION_MAJOR #{QtVersionMajor})"
-    f.puts
-
-    f.puts "add_executable(Qt5::moc IMPORTED)"
-    f.puts "set_target_properties(Qt5::moc PROPERTIES"
-    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'moc'}\")"
-    f.puts "set(Qt5Core_MOC_EXECUTABLE Qt5::moc)"
-
-    f.puts "add_executable(Qt5::qmake IMPORTED)"
-    f.puts "set_target_properties(Qt5::qmake PROPERTIES "
-    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'qmake'}\")"
-    f.puts "set(Qt5Core_QMAKE_EXECUTABLE Qt5::qmake)"
-
-    f.puts "add_executable(Qt5::rcc IMPORTED)"
-    f.puts "set_target_properties(Qt5::rcc PROPERTIES "
-    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'rcc'}\")"
-    f.puts "set(Qt5Core_RCC_EXECUTABLE Qt5::rcc)"
-
-    f.write File.read(ENV.fetch('core_macros'))
+  a_file = find_qt_library("lib#{name}.a")
+  if !a_file
+    $stderr.puts "warning: cannot find main library file for #{name}.cmake."
+    return
   end
-end
 
-def create_cmake_config(subname)
-  name = "Qt5#{subname}"
+  subname = name.gsub(/^Qt5/, '')
 
-  mkdir CMakeDir + name
-
-  a_file = find_qt_library("lib#{name}.a") || raise
+  mkdir OutCMakeDir + name
 
   deps = flatten_deps_for_cmake_file("#{name}.x")
 
@@ -328,7 +307,7 @@ def create_cmake_config(subname)
     end
   end
 
-  File.open(CMakeDir + name + "#{name}Config.cmake", 'w') do |f|
+  File.open(OutCMakeDir + name + "#{name}Config.cmake", 'w') do |f|
     f.puts "include_guard()"
 
     import_static_lib f, "Qt5::#{subname}",
@@ -338,7 +317,16 @@ def create_cmake_config(subname)
       INTERFACE_INCLUDE_DIRECTORIES: incdirs,
       INTERFACE_COMPILE_DEFINITIONS: 'QT_STATIC'
 
-    f.puts "include(#{CMakeDir + 'core.cmake'})"
+    f.puts "include(#{OutCMakeDir + 'core.cmake'})"
+  end
+end
+
+def create_cmake_configs
+  mkdir OutCMakeDir
+  DepGraph.each_key do |name|
+    case determine_dep_type(name)
+    when :x then create_cmake_config(name)
+    end
   end
 end
 
@@ -358,6 +346,5 @@ def generate_output
   end
 
   create_pc_files
-
-  mkdir CMakeDir
+  create_cmake_configs
 end

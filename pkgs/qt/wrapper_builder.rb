@@ -13,7 +13,6 @@ def make_dep_graph
   add_dep 'Qt5Xml.x', 'libQt5Xml.a'
   add_dep 'Qt5Xml.x', 'Qt5Xml.x'
   add_dep 'Qt5Test.x', 'libQt5Test.a'
-  add_dep 'Qt5Test.x', 'Qt5Text.x'
   add_dep 'Qt5Widgets.x', 'Qt5WidgetsNoPlugins.x'
   add_dep 'Qt5WidgetsNoPlugins.x', 'libQt5Widgets.a'
   add_dep 'Qt5WidgetsNoPlugins.x', 'Qt5Gui.x'
@@ -147,10 +146,37 @@ def make_dep_graph
   add_deps_of_pc_files
 end
 
-def create_cmake_main_config
-  mkdir CMakeDir + 'Qt5'
+def create_cmake_core_files
+  File.open(OutCMakeDir + 'core.cmake', 'w') do |f|
+    f.puts "include_guard()"
+    f.puts
 
-  File.open(CMakeDir + 'Qt5' + 'Qt5Config.cmake', 'w') do |f|
+    f.puts "set(QT_VERSION_MAJOR #{QtVersionMajor})"
+    f.puts
+
+    f.puts "add_executable(Qt5::moc IMPORTED)"
+    f.puts "set_target_properties(Qt5::moc PROPERTIES"
+    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'moc'}\")"
+    f.puts "set(Qt5Core_MOC_EXECUTABLE Qt5::moc)"
+
+    f.puts "add_executable(Qt5::qmake IMPORTED)"
+    f.puts "set_target_properties(Qt5::qmake PROPERTIES "
+    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'qmake'}\")"
+    f.puts "set(Qt5Core_QMAKE_EXECUTABLE Qt5::qmake)"
+
+    f.puts "add_executable(Qt5::rcc IMPORTED)"
+    f.puts "set_target_properties(Qt5::rcc PROPERTIES "
+    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'rcc'}\")"
+    f.puts "set(Qt5Core_RCC_EXECUTABLE Qt5::rcc)"
+
+    f.write File.read(ENV.fetch('core_macros'))
+  end
+end
+
+def create_cmake_main_config
+  mkdir OutCMakeDir + 'Qt5'
+
+  File.open(OutCMakeDir + 'Qt5' + 'Qt5Config.cmake', 'w') do |f|
     f.puts <<END
 include_guard()
 
@@ -197,17 +223,7 @@ END
 end
 
 make_dep_graph
-
 generate_output
 
 create_cmake_core_files
-create_cmake_config('Core')
-create_cmake_config('Concurrent')
-create_cmake_config('Gui')
-create_cmake_config('Network')
-create_cmake_config('OpenGL')
-create_cmake_config('Test')
-create_cmake_config('Widgets')
-create_cmake_config('Xml')
 create_cmake_main_config
-
