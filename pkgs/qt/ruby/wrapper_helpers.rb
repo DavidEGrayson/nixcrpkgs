@@ -317,7 +317,8 @@ def create_cmake_config(name)
       INTERFACE_INCLUDE_DIRECTORIES: incdirs,
       INTERFACE_COMPILE_DEFINITIONS: 'QT_STATIC'
 
-    f.puts "include(#{OutCMakeDir + 'core.cmake'})"
+    # TODO: which CMake configs really need this?
+    # f.puts "include(#{OutCMakeDir + 'core.cmake'})"
   end
 end
 
