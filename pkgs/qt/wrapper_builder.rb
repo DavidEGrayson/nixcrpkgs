@@ -149,33 +149,6 @@ def make_dep_graph
   add_deps_of_pc_files
 end
 
-def create_cmake_core_files
-  File.open(OutCMakeDir + 'core.cmake', 'w') do |f|
-    f.puts "include_guard()"
-    f.puts
-
-    f.puts "set(QT_VERSION_MAJOR #{QtVersionMajor})"
-    f.puts
-
-    f.puts "add_executable(Qt5::moc IMPORTED)"
-    f.puts "set_target_properties(Qt5::moc PROPERTIES"
-    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'moc'}\")"
-    f.puts "set(Qt5Core_MOC_EXECUTABLE Qt5::moc)"
-
-    f.puts "add_executable(Qt5::qmake IMPORTED)"
-    f.puts "set_target_properties(Qt5::qmake PROPERTIES "
-    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'qmake'}\")"
-    f.puts "set(Qt5Core_QMAKE_EXECUTABLE Qt5::qmake)"
-
-    f.puts "add_executable(Qt5::rcc IMPORTED)"
-    f.puts "set_target_properties(Qt5::rcc PROPERTIES "
-    f.puts "  IMPORTED_LOCATION \"#{BinDir + 'rcc'}\")"
-    f.puts "set(Qt5Core_RCC_EXECUTABLE Qt5::rcc)"
-
-    f.write File.read(ENV.fetch('core_macros'))
-  end
-end
-
 def create_cmake_main_config
   mkdir OutCMakeDir + 'Qt5'
 
@@ -228,5 +201,33 @@ end
 make_dep_graph
 generate_output
 
-create_cmake_core_files
+File.open(OutCMakeDir + 'Qt5Core' + 'Qt5CoreConfig.cmake', 'a') do |f|
+  f.puts <<END
+set(QT_VERSION_MAJOR #{QtVersionMajor})
+
+# TODO: try not to define this in two places like we currently are
+set (_qt5_install_prefix "#{OutDir}")
+
+add_executable (Qt5::moc IMPORTED)
+set_target_properties (Qt5::moc PROPERTIES
+  IMPORTED_LOCATION "${_qt5_install_prefix}/bin/moc")
+set (Qt5Core_MOC_EXECUTABLE Qt5::moc)
+
+add_executable (Qt5::qmake IMPORTED)
+set_target_properties (Qt5::qmake PROPERTIES
+  IMPORTED_LOCATION "${_qt5_install_prefix}/bin/qmake")
+set (Qt5Core_QMAKE_EXECUTABLE Qt5::qmake)
+
+add_executable (Qt5::rcc IMPORTED)
+set_target_properties (Qt5::rcc PROPERTIES
+  IMPORTED_LOCATION "${_qt5_install_prefix}/bin/rcc")
+set (Qt5Core_RCC_EXECUTABLE Qt5::rcc)
+
+include("${CMAKE_CURRENT_LIST_DIR}/Qt5CoreMacros.cmake")
+END
+end
+
+ln_s RawCMakeDir + 'Qt5Core' + 'Qt5CoreMacros.cmake',
+  OutCMakeDir + 'Qt5Core' + 'Qt5CoreMacros.cmake'
+
 create_cmake_main_config

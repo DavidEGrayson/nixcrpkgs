@@ -7,6 +7,7 @@ QtVersionString = ENV.fetch('version')
 QtVersionMajor = QtVersionString.split('.').first.to_i
 
 RawDir = Pathname(ENV.fetch('raw'))
+RawCMakeDir = RawDir + 'lib' + 'cmake'
 
 OutDir = Pathname(ENV.fetch('out'))
 OutPcDir = OutDir + 'lib' + 'pkgconfig'
@@ -272,6 +273,7 @@ def create_cmake_config(name)
 
   a_file = find_qt_library("lib#{name}.a")
   if !a_file
+    # TODO
     $stderr.puts "warning: cannot find main library file for #{name}.cmake."
     return
   end
@@ -317,8 +319,10 @@ def create_cmake_config(name)
       INTERFACE_INCLUDE_DIRECTORIES: incdirs,
       INTERFACE_COMPILE_DEFINITIONS: 'QT_STATIC'
 
-    # TODO: which CMake configs really need this?
-    # f.puts "include(#{OutCMakeDir + 'core.cmake'})"
+    # Need to include core.cmake to get automoc working properly.
+    if name != 'Qt5Core'
+      f.puts 'find_package (Qt5Core)'
+    end
   end
 end
 
