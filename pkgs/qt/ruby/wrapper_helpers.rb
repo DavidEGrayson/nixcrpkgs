@@ -264,19 +264,12 @@ def set_properties(f, target_name, properties)
 end
 
 def import_static_lib(f, target_name, properties)
-  f.puts "add_library(#{target_name} STATIC IMPORTED)"
+  f.puts "add_library(#{target_name} IMPORTED INTERFACE)"
   set_properties(f, target_name, properties)
 end
 
 def create_cmake_config(name)
   name = name.gsub(/\..*/, '')  # remove .x extension
-
-  a_file = find_qt_library("lib#{name}.a")
-  if !a_file
-    # TODO
-    $stderr.puts "warning: cannot find main library file for #{name}.cmake."
-    return
-  end
 
   subname = name.gsub(/^Qt5/, '')
 
@@ -313,11 +306,9 @@ def create_cmake_config(name)
     f.puts "include_guard()"
 
     import_static_lib f, "Qt5::#{subname}",
-      IMPORTED_LOCATION: a_file,
-      IMPORTED_LINK_INTERFACE_LANGUAGES: 'CXX',
       INTERFACE_LINK_LIBRARIES: libdirflags.reverse.uniq + ldflags.reverse,
       INTERFACE_INCLUDE_DIRECTORIES: incdirs,
-      INTERFACE_COMPILE_DEFINITIONS: 'QT_STATIC'
+      INTERFACE_COMPILE_DEFINITIONS: 'QT_STATIC'  # TODO: do this only for Qt5Core
 
     # Need to include core.cmake to get automoc working properly.
     if name != 'Qt5Core'

@@ -55,6 +55,8 @@ if Os == 'windows'
   add_dep 'libqwindows.a', 'libQt5WindowsUIAutomationSupport.a'
 
   add_dep 'Qt5Widgets.x', 'qwindowsvistastyle.x'
+  add_dep 'libQt5Widgets.a', '-luxtheme'
+  add_dep 'libQt5Widgets.a', '-ldwmapi'
   add_dep 'qwindowsvistastyle.x', 'libqwindowsvistastyle.a'
 
   add_dep 'libqwindowsvistastyle.a', '-luxtheme'
@@ -149,13 +151,13 @@ end
 
 generate_output
 
+
 #### Add finishing touches for lib/cmake/Qt5Core/ ##############################
 
 File.open(OutCMakeDir + 'Qt5Core' + 'Qt5CoreConfig.cmake', 'a') do |f|
   f.puts <<END
 set(QT_VERSION_MAJOR #{QtVersionMajor})
 
-# TODO: try not to define this in two places like we currently are
 set (_qt5Core_install_prefix "#{OutDir}")
 
 add_executable (Qt5::moc IMPORTED)
@@ -179,6 +181,7 @@ end
 
 ln_s RawCMakeDir + 'Qt5Core' + 'Qt5CoreMacros.cmake',
   OutCMakeDir + 'Qt5Core' + 'Qt5CoreMacros.cmake'
+
 
 #### Create lib/cmake/Qt5/ #####################################################
 
