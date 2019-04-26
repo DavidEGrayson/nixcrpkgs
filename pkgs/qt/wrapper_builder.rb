@@ -4,8 +4,6 @@ require 'wrapper_helpers'
 
 def make_dep_graph
   # High-level dependencies.
-  add_dep 'Qt5OpenGL.x', 'libQt5OpenGL.a'
-  add_dep 'Qt5OpenGL.x', 'Qt5WidgetsNoPlugins.x'
   add_dep 'Qt5Network.x', 'libQt5Network.a'
   add_dep 'Qt5Network.x', 'Qt5Core.x'
   add_dep 'Qt5Concurrent.x', 'libQt5Concurrent.a'
@@ -20,6 +18,11 @@ def make_dep_graph
   add_dep 'Qt5GuiNoPlugins.x', 'libQt5Gui.a'
   add_dep 'Qt5GuiNoPlugins.x', 'Qt5Core.x'
   add_dep 'Qt5Core.x', 'libQt5Core.a'
+  if Os != 'linux'
+    # TODO: libQtOpenGL.a for Linux
+    add_dep 'Qt5OpenGL.x', 'libQt5OpenGL.a'
+    add_dep 'Qt5OpenGL.x', 'Qt5WidgetsNoPlugins.x'
+  end
 
   # Include directories.
   add_dep 'Qt5Core.x', '-I' + OutIncDir.to_s
