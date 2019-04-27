@@ -128,12 +128,12 @@ end
 
 # Note: It would be nice to find some solution so that Qt5Widgets.pc does not
 # require Qt5GuiNoPlugins, since it already requires Qt5Gui.
-def flatten_deps_for_pc_file(pc_file)
-  flatten_deps(DepGraph.fetch(pc_file)) do |dep|
+def flatten_deps_for_x_file(x_file)
+  flatten_deps(DepGraph.fetch(x_file)) do |dep|
     deps = case determine_dep_type(dep)
            when :x, :pc then
-             # Don't expand dependencies for a .pc file because we can just
-             # refer to them with the Requires line in our .pc file.
+             # Don't expand dependencies for a .pc and .x files because we can
+             # just refer to them with the Requires line in our .pc file.
              []
            else DepGraph.fetch(dep)
            end
@@ -141,15 +141,9 @@ def flatten_deps_for_pc_file(pc_file)
     # Replace .a files with a canonical .x file if there is one.
     deps.map do |name|
       substitute = canonical_x_file(name)
-      substitute = nil if substitute == pc_file
+      substitute = nil if substitute == x_file
       substitute || name
     end
-  end
-end
-
-def flatten_deps_for_cmake_file(cmake_file)
-  flatten_deps(DepGraph.fetch(cmake_file)) do |dep|
-    DepGraph.fetch(dep)
   end
 end
 
@@ -159,7 +153,7 @@ def create_pc_file(name)
   ldflags = []
   cflags = []
 
-  deps = flatten_deps_for_pc_file(name)
+  deps = flatten_deps_for_x_file(name)
 
   deps.each do |dep|
     dep = dep.dup
@@ -253,7 +247,7 @@ def set_property(f, target_name, property_name, value)
     end.join(' ')
   end
 
-  f.puts "set_property(TARGET #{target_name} " \
+  f.puts "set_property (TARGET #{target_name} " \
          "PROPERTY #{property_name} #{value})"
 end
 
@@ -264,34 +258,33 @@ def set_properties(f, target_name, properties)
 end
 
 def import_static_lib(f, target_name, properties)
-  f.puts "add_library(#{target_name} IMPORTED INTERFACE)"
+  f.puts "add_library (#{target_name} IMPORTED INTERFACE)"
   set_properties(f, target_name, properties)
 end
 
-def create_cmake_config(name)
-  name = name.gsub(/\..*/, '')  # remove .x extension
+def create_cmake_config(orig_name)
+  name = orig_name.gsub(/\..*\Z/, '')  # remove .x extension
 
-  subname = name.gsub(/^Qt5/, '')
+  subname = name.gsub(/\AQt5/, '')
 
   mkdir OutCMakeDir + name
 
-  deps = flatten_deps_for_cmake_file("#{name}.x")
+  deps = flatten_deps_for_x_file(orig_name)
 
   incdirs = []
-  libdirflags = []
-  ldflags = []
+  pc_packages = []
+  cmake_packages = []
+  cmake_libs = []
   deps.each do |dep|
-    dep = dep.dup
     case determine_dep_type(dep)
     when :a
       full_path = find_qt_library(dep)
       raise "Could not find library: #{dep}" if !full_path
       libdir = full_path.dirname.to_s
       libname = full_path.basename.to_s
-      libname.sub!(/\Alib/, '')
-      libname.sub!(/.a\Z/, '')
-      libdirflags << "-L#{libdir}"
-      ldflags << "-l#{libname}"
+      libname = libname.gsub(/\Alib|.a\Z/, '')
+      cmake_libs << "-l#{libname}"
+      cmake_libs << "-L#{libdir}"
     when :ldflag
       ldflags << dep
     when :libdirflag
@@ -299,18 +292,37 @@ def create_cmake_config(name)
     when :incdirflag
       incdir = dep.sub(/\A-I/, '')
       incdirs << incdir
+    when :x
+      package = dep.sub(/\..*\Z/, '')
+      cmake_packages << package
+      cmake_libs << 'Qt5::' + package.sub('Qt5', '')
+    when :pc
+      package = dep.sub(/\..*\Z/, '')
+      pc_packages << package
+      cmake_libs << 'PkgConfig::' + package
     end
   end
+
+  cmake_packages << 'PkgConfig' if !pc_packages.empty?
 
   File.open(OutCMakeDir + name + "#{name}Config.cmake", 'w') do |f|
     f.puts "include_guard()"
 
+    cmake_packages.each do |dep|
+      dep = dep.sub(/\..*\Z/, '')
+      f.puts "find_package (#{dep} REQUIRED)"
+    end
+
+    pc_packages.each do |dep|
+      f.puts "pkg_check_modules(#{dep} REQUIRED IMPORTED_TARGET #{dep})"
+    end
+
     import_static_lib f, "Qt5::#{subname}",
-      INTERFACE_LINK_LIBRARIES: libdirflags.reverse.uniq + ldflags.reverse,
+      INTERFACE_LINK_LIBRARIES: cmake_libs.reverse,
       INTERFACE_INCLUDE_DIRECTORIES: incdirs,
       INTERFACE_COMPILE_DEFINITIONS: 'QT_STATIC'  # TODO: do this only for Qt5Core
 
-    # Need to include core.cmake to get automoc working properly.
+    # TODO: remove this soon
     if name != 'Qt5Core'
       f.puts 'find_package (Qt5Core)'
     end
