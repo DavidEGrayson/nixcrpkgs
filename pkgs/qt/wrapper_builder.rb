@@ -2,8 +2,6 @@ STDOUT.sync = true
 ENV['PATH'] = ENV.fetch('_PATH')
 require 'wrapper_helpers'
 
-add_deps_of_pc_files
-
 # High-level dependencies.
 add_dep 'Qt5Network.x', 'libQt5Network.a'
 add_dep 'Qt5Network.x', 'Qt5Core.x'
@@ -149,6 +147,7 @@ if Os == 'macos'
   add_dep 'libQt5Widgets.a', '-framework AppKit'
 end
 
+add_deps_of_pc_files
 generate_output
 
 

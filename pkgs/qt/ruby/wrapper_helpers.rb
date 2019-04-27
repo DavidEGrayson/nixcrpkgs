@@ -283,7 +283,7 @@ def create_cmake_config(name)
   deps.each do |dep|
     dep = dep.dup
     case determine_dep_type(dep)
-    when :a then
+    when :a
       full_path = find_qt_library(dep)
       raise "Could not find library: #{dep}" if !full_path
       libdir = full_path.dirname.to_s
@@ -292,11 +292,11 @@ def create_cmake_config(name)
       libname.sub!(/.a\Z/, '')
       libdirflags << "-L#{libdir}"
       ldflags << "-l#{libname}"
-    when :ldflag then
+    when :ldflag
       ldflags << dep
-    when :libdirflag then
+    when :libdirflag
       libdirflags << dep
-    when :incdirflag then
+    when :incdirflag
       incdir = dep.sub(/\A-I/, '')
       incdirs << incdir
     end
