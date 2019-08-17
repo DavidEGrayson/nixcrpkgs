@@ -286,9 +286,9 @@ def create_cmake_config(orig_name)
       cmake_libs << "-l#{libname}"
       cmake_libs << "-L#{libdir}"
     when :ldflag
-      ldflags << dep
+      cmake_libs << dep
     when :libdirflag
-      libdirflags << dep
+      cmake_libs << dep
     when :incdirflag
       incdir = dep.sub(/\A-I/, '')
       incdirs << incdir
