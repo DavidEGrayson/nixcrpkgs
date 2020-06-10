@@ -1,3 +1,15 @@
+diff -ur dvdbackup-0.4.2-orig/configure dvdbackup-0.4.2/configure
+--- dvdbackup-0.4.2-orig/configure	2020-06-09 20:52:41.556328000 -0700
++++ dvdbackup-0.4.2/configure	2020-06-09 21:07:12.999832000 -0700
+@@ -6741,7 +6741,7 @@
+ esac
+ 
+ 
+-$as_echo "#define malloc rpl_malloc" >>confdefs.h
++# $as_echo "#define malloc rpl_malloc" >>confdefs.h
+ 
+ fi
+ 
 diff -ur dvdbackup-0.4.2-orig/src/main.c dvdbackup-0.4.2/src/main.c
 --- dvdbackup-0.4.2-orig/src/main.c	2020-06-09 20:52:41.556328000 -0700
 +++ dvdbackup-0.4.2/src/main.c	2020-06-09 20:57:32.381667999 -0700
