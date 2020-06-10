@@ -1,0 +1,14 @@
+diff -ur dvdbackup-0.4.2-orig/src/main.c dvdbackup-0.4.2/src/main.c
+--- dvdbackup-0.4.2-orig/src/main.c	2020-06-09 20:52:41.556328000 -0700
++++ dvdbackup-0.4.2/src/main.c	2020-06-09 20:57:32.381667999 -0700
+@@ -43,6 +43,10 @@
+ /* other libraries */
+ #include <getopt.h>
+ 
++#ifdef _WIN32
++#define mkdir(name, mode) mkdir(name)
++#endif
++
+ 
+ /* String containing name the program is called with. */
+ const char* program_name;
