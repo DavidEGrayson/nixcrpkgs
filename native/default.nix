@@ -35,15 +35,17 @@ let
 
   bomutils = import ./bomutils { env = native_base; };
 
-  # macos_installer_utils = TODO
-  # Will have nixpkgs.xar, nixpkgs.cpio, bomutils, pkgbuild, productbuild
+  macos_pkg_utils = import ./macos_pkg_utils {
+    env = native_base;
+    inherit bomutils;
+  };
 
   native = native_base // {
     default_native_inputs = native_base.default_native_inputs ++ [
       pkgconf
     ];
 
-    inherit pkgconf bomutils;
+    inherit pkgconf bomutils macos_pkg_utils;
 
     make_derivation = import ../make_derivation.nix native;
   };
