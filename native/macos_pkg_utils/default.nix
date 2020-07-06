@@ -12,7 +12,8 @@ env.make_derivation rec {
   ruby = env.nixpkgs.ruby;
   xar = env.nixpkgs.xar;
   cpio = env.nixpkgs.cpio;
+  coreutils = env.nixpkgs.coreutils;
   inherit bomutils;
 
-  dep_path = "${ruby}/bin:${xar}/bin:${cpio}/bin:${bomutils}/bin";
+  dep_path = "${ruby}/bin:${xar}/bin:${cpio}/bin:${bomutils}/bin:${coreutils}/bin";
 }
