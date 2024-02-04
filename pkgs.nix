@@ -51,6 +51,10 @@ rec {
     inherit gmp mpfr;
   };
 
+  riscv-binutils = import ./pkgs/riscv-binutils {
+    inherit crossenv;
+  };
+
   libudev = import ./pkgs/libudev {
     inherit crossenv;
   };
