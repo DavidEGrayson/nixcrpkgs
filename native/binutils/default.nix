@@ -16,7 +16,7 @@ env.make_derivation rec {
     ./deterministic.patch
   ];
 
-  native_inputs = [ nixpkgs.texinfo nixpkgs.bison nixpkgs.m4 ];
+  native_inputs = [ nixpkgs.bison nixpkgs.flex nixpkgs.m4 nixpkgs.texinfo ];
 
   configure_flags =
     "--target=${host} " +
