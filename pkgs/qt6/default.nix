@@ -194,7 +194,7 @@ let
   };
 
   # This is here to help us reproduce bugs in Qt:
-  # - TODO: It can't connect to DBus, which all example apps to print a warning.
+  # - TODO: It can't connect to DBus, which causes all example apps to print a warning.
   tmphax = crossenv.make_derivation {
     name = "qt-tmphax";
     builder = ./tmphax_builder.sh;
