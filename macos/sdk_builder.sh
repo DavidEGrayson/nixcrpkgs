@@ -10,8 +10,4 @@ ruby -rjson \
   > version.txt
 
 # Make sure the STL headers are in the expected place.
-if [ -d usr/include/c++/v1 ]; then
-  mv usr/include/c++/v1/* usr/include/c++/
-  rmdir usr/include/c++/v1
-fi
-ls usr/include/c++/iterator > /dev/null
+ls usr/include/c++/v1/iterator > /dev/null

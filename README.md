@@ -95,18 +95,17 @@ will get an error like this:
 
 To generate the tarball, follow these steps:
 
-1. On a macOS machine, install [Xcode](https://developer.apple.com/xcode/).
-2. Download this repository to the machine.
-3. In a Terminal window, run the `macos/gen_sdk_package.sh` script from this repository.
-4. After several minutes, the current directory should have a tarball with a name like
-  `MacOSX12.3.sdk.tar.bz2` and a size of about 100 MB.
-5. Copy the SDK tarball file to the machine where you will be building software,
+1. Download this repository to the machine and
+   navigate to the `macos` directory in a Terminal.
+2. Run the `./package_sdk.rb` script from this repository.
+3. After several minutes, the current directory should have a tarball with a name like
+  `MacOSX15.4.sdk.tar.xz` and a size of about 100 MB.
+4. Copy the SDK tarball file to the Linux machine where you will be building software,
   and put it in the `macos` directory.
-6. The nixcrpkgs build recipe for the SDK is hardcoded to look for a file named
-  `MacOSX.sdk.tar.xz`, so rename the tarball to that.  (Changing the extension
-   is fine.)
+5. The nixcrpkgs build recipe for the SDK is hardcoded to look for a file named
+  `MacOSX.sdk.tar.xz`, so rename the tarball to that.
 7. Consider keeping a backup of the tarball so you can always rebuild any software you
-  made with it.
+   made with it.
 
 Now you should be able to build your software for macOS.
 

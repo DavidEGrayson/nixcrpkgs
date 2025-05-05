@@ -150,7 +150,7 @@ let
     _cflags = "-target ${host} --sysroot ${sdk} " +
       "-I${sdk}/usr/include -mlinker-version=${ld.apple_version}";
     CC = "clang ${_cflags}";
-    CXX = "clang++ ${_cflags} -stdlib=libc++ -cxx-isystem ${sdk}/usr/include/c++";
+    CXX = "clang++ ${_cflags} -stdlib=libc++ -cxx-isystem ${sdk}/usr/include/c++/v1";
 
     cmake_flags =
       "-DCMAKE_BUILD_TYPE=Release " +
