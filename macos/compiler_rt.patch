@@ -1,6 +1,7 @@
---- compiler-rt-14.0.6.src/cmake/base-config-ix.cmake
-+++ compiler-rt-14.0.6.src.patched/cmake/base-config-ix.cmake
-@@ -120,24 +120,6 @@
+diff -ur compiler-rt-20.1.4.src-orig/cmake/base-config-ix.cmake compiler-rt-20.1.4.src/cmake/base-config-ix.cmake
+--- compiler-rt-20.1.4.src-orig/cmake/base-config-ix.cmake	2025-05-05 13:34:59.405960161 -0700
++++ compiler-rt-20.1.4.src/cmake/base-config-ix.cmake	2025-05-05 13:36:34.293727160 -0700
+@@ -127,24 +127,6 @@
    "Path where compiler-rt data files should be installed.")
  
  if(APPLE)
@@ -22,17 +23,26 @@
 -    set(OSX_SYSROOT_FLAG "")
 -  endif()
 -
-   option(COMPILER_RT_ENABLE_IOS "Enable building for iOS" On)
-   option(COMPILER_RT_ENABLE_WATCHOS "Enable building for watchOS - Experimental" Off)
-   option(COMPILER_RT_ENABLE_TVOS "Enable building for tvOS - Experimental" Off)
---- compiler-rt-14.0.6.src/cmake/Modules/AddCompilerRT.cmake
-+++ compiler-rt-14.0.6.src.patched/cmake/Modules/AddCompilerRT.cmake
-@@ -372,7 +372,7 @@
-         set_target_properties(${libname} PROPERTIES IMPORT_PREFIX "")
-         set_target_properties(${libname} PROPERTIES IMPORT_SUFFIX ".lib")
-       endif()
--      if(APPLE)
-+      if(FALSE)
-         # Ad-hoc sign the dylibs
-         add_custom_command(TARGET ${libname}
-           POST_BUILD  
+   try_compile_only(COMPILER_RT_HAS_DARWIN_TARGET_VARIANT_FLAG
+                    FLAGS
+                    "-target" "x86_64-apple-macos10.15"
+diff -ur compiler-rt-20.1.4.src-orig/cmake/config-ix.cmake compiler-rt-20.1.4.src/cmake/config-ix.cmake
+--- compiler-rt-20.1.4.src-orig/cmake/config-ix.cmake	2025-05-05 13:34:59.416487089 -0700
++++ compiler-rt-20.1.4.src/cmake/config-ix.cmake	2025-05-05 13:39:30.087320156 -0700
+@@ -500,11 +500,11 @@
+   # We're setting the flag manually for each target OS
+   set(CMAKE_OSX_DEPLOYMENT_TARGET "")
+ 
+-  set(DARWIN_COMMON_CFLAGS -stdlib=libc++)
+-  set(DARWIN_COMMON_LINK_FLAGS
+-    -stdlib=libc++
+-    -lc++
+-    -lc++abi)
++  #set(DARWIN_COMMON_CFLAGS -stdlib=libc++)
++  #set(DARWIN_COMMON_LINK_FLAGS
++  #  -stdlib=libc++
++  #  -lc++
++  #  -lc++abi)
+ 
+   llvm_check_compiler_linker_flag(C "-fapplication-extension" COMPILER_RT_HAS_APP_EXTENSION)
+   if(COMPILER_RT_HAS_APP_EXTENSION)

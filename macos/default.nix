@@ -5,6 +5,9 @@
 # 3. The one we build here (macos.clang) and use as our cross-compiler.
 #    We also use compiler-rt from this version.
 
+# TODO: let's try using nixpkgs.clang and building a toolchain like they do
+# on the 2.0-llvm-based branch of osxcross
+
 # Note: To reduce clutter here, it might be nice to move clang to
 # `native`, and also make `native` provide a function for building
 # binutils.  So clang and binutils recipes could be shared by the
@@ -25,28 +28,37 @@ let
 
   host = "${arch}-apple-${darwin_name}";
 
-  clang_version = "14.0.6";  # 2022-06-24
+  clang_version = "20.1.4";  # 2025-04-29
 
   clang_src = nixpkgs.fetchurl {
     url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${clang_version}/clang-${clang_version}.src.tar.xz";
-    sha256 = "K1hHtqYxGLnv5chVSDY8gf/glrZsOzZ16VPiY0KuQDE=";
+    hash = "sha256-8mRUIkGQwgkOXSG+hwCrvFZZKgwHZCkaXDWPKXTx/eM=";
   };
 
   llvm_src = nixpkgs.fetchurl {
     url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${clang_version}/llvm-${clang_version}.src.tar.xz";
-    sha256 = "BQki7KrKV4H99mMeqSvHFRg/IC+dLxUUcibwI0FPYZo=";
+    hash = "sha256-mKleSobdUNAXeuBYNl4I2gVprYQ+gppoSJoNIX5cRBE=";
+  };
+
+  llvm_cmake_src = nixpkgs.fetchurl {
+    url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${clang_version}/cmake-${clang_version}.src.tar.xz";
+    hash = "sha256-1v5S5P1wlZAoQSfP7xQ/Z/8bkXhl8bRzH2YAwzC/nCc=";
+  };
+
+  llvm_third_party_src = nixpkgs.fetchurl {
+    url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${clang_version}/third-party-${clang_version}.src.tar.xz";
+    hash = "sha256-lKQtYqr5ayYPASF+FwYgvRIOr3CSaTCljIxFGs65wBU=";
   };
 
   compiler-rt_src = nixpkgs.fetchurl {
     url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${clang_version}/compiler-rt-${clang_version}.src.tar.xz";
-    sha256 = "iN8wOEDKj7/5ROFeYcFBIm/nn10rjon7AkJk13hBoC4=";
+    hash = "sha256-3E0BqjzLZITXTW2XjX9G4vOzF97nCODXGUBVIDAIxsc=";
   };
 
   clang = native.make_derivation rec {
     name = "clang-${clang_version}";
 
-    src = clang_src;
-    inherit llvm_src;
+    inherit clang_src llvm_src llvm_cmake_src llvm_third_party_src;
 
     patches = [ ];
 
@@ -154,6 +166,8 @@ let
 
     src = compiler-rt_src;
 
+    inherit llvm_src llvm_cmake_src;
+
     builder = ./compiler_rt_builder.sh;
 
     patches = [ ./compiler_rt.patch ];
@@ -170,8 +184,7 @@ let
       "-DCMAKE_SYSTEM_NAME=Darwin " +
       "-DCMAKE_OSX_SYSROOT=${sdk} " +
       "-DDARWIN_osx_SYSROOT=${sdk} " +
-      "-DDARWIN_osx_ARCHS=${arch} " +
-      "-DDARWIN_osx_BUILTIN_ARCHS=${arch} " +
+      "-DDARWIN_macosx_OVERRIDE_SDK_VERSION=${sdk.version} " +
       "-DCMAKE_LINKER=${ld}/bin/${host}-ld " +
       "-DCMAKE_AR=${ar}/bin/${host}-ar " +
       "-DCMAKE_RANLIB=${misc}/bin/${host}-ranlib " +

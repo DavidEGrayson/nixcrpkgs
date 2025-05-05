@@ -1,11 +1,15 @@
 source $setup
 
+tar -xf $llvm_third_party_src
+mv third-party* third-party
+
+tar -xf $llvm_cmake_src
+mv cmake-* cmake
+
 tar -xf $llvm_src
-rm -r cmake
 mv llvm-* llvm
 
-tar -xf $src
-ls -l
+tar -xf $clang_src
 mv clang-* clang
 cd clang
 for patch in $patches; do
