@@ -75,14 +75,17 @@ let
     native_inputs = [ nixpkgs.python3 ];
   };
 
+  # We build libdispatch with clang because it passes a bunch of clang-specific
+  # warning options to its compiler.
   libdispatch = native.make_derivation rec {
     name = "libdispatch-${version}";
-    version = "2f1ea48";
+    version = "fdf3fc8";  # 2024-09-21
     src = nixpkgs.fetchurl {
-      url = "https://github.com/swiftlang/swift-corelibs-libdispatch/archive/${version}.tar.gz";  # 2025-04-23
-      hash = "sha256-SyhjUY9hs4oO43gTzPn02hBtjVQZRx9fzbb5atyQVJs=";
+      url = "https://github.com/tpoechtrager/apple-libdispatch/archive/${version}.tar.gz";
+      hash = "sha256-YBJaPvtSwTx5JdjjZGk8pwYmau6HZa6bM5odegK32Ag=";
     };
     builder = ./libdispatch_builder.sh;
+    native_inputs = [ nixpkgs.clang ];
   };
 
   cctools_commit = "9eaa9fb";  # 2025-05-02
@@ -108,11 +111,10 @@ let
   ld = native.make_derivation rec {
     name = "cctools-ld64";
     apple_version = cctools_apple_version;
-    inherit libdispatch;
     src = cctools_port_src;
     patches = cctools_patches;
     builder = ./ld_builder.sh;
-    native_inputs = [ nixpkgs.clang tapi ];
+    native_inputs = [ nixpkgs.clang tapi libdispatch ];
     inherit host;
   };
 

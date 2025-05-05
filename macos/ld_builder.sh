@@ -25,16 +25,15 @@ cd build
 
 CFLAGS="-Wno-format -Wno-deprecated -Wno-deprecated-declarations -Wno-unused-result"
 CFLAGS+=" -Wfatal-errors -O2 -g -fblocks"
-CFLAGS+=" -I$libdispatch/include"
 CFLAGS+=" -I../include -I../include/foreign"
 CFLAGS+=" -I../ld64/src/{,ld,ld/parsers,abstraction,3rd,3rd/include,mach_o}"
-CFLAGS+=" $(pkg-config --cflags libtapi) -DTAPI_SUPPORT"
+CFLAGS+=" $(pkg-config --cflags libtapi libdispatch) -DTAPI_SUPPORT"
 CFLAGS+=" -DPROGRAM_PREFIX=\\\"$host-\\\""
 CFLAGS+=" -DHAVE_BCMP -DHAVE_BZERO -DHAVE_BCOPY -DHAVE_INDEX -DHAVE_RINDEX -D__LITTLE_ENDIAN__"
 
 CXXFLAGS="-std=gnu++20 $CFLAGS"
 
-LDFLAGS="$(pkg-config --libs libtapi) -ldl -lpthread"
+LDFLAGS="$(pkg-config --libs libtapi libdispatch) -ldl -lpthread"
 
 for f in ../ld64/src/ld/*.c ../ld64/src/3rd/*.c ; do
   echo "compiling $f"
