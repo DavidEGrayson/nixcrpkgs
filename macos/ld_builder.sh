@@ -25,17 +25,18 @@ cd build
 
 CFLAGS="-Wno-format -Wno-deprecated -Wno-deprecated-declarations -Wno-unused-result"
 CFLAGS+=" -Wfatal-errors -O2 -g -fblocks"
-CFLAGS+=" -I../ld64/src -I../ld64/src/ld -I../ld64/src/ld/parsers -I../ld64/src/abstraction -I../ld64/src/3rd -I../ld64/src/3rd/include -I../ld64/src/3rd/BlocksRuntime"
+CFLAGS+=" -I$libdispatch/include"
 CFLAGS+=" -I../include -I../include/foreign"
+CFLAGS+=" -I../ld64/src/{,ld,ld/parsers,abstraction,3rd,3rd/include,mach_o}"
 CFLAGS+=" $(pkg-config --cflags libtapi) -DTAPI_SUPPORT"
 CFLAGS+=" -DPROGRAM_PREFIX=\\\"$host-\\\""
 CFLAGS+=" -DHAVE_BCMP -DHAVE_BZERO -DHAVE_BCOPY -DHAVE_INDEX -DHAVE_RINDEX -D__LITTLE_ENDIAN__"
 
-CXXFLAGS="-std=gnu++17 $CFLAGS"
+CXXFLAGS="-std=gnu++20 $CFLAGS"
 
 LDFLAGS="$(pkg-config --libs libtapi) -ldl -lpthread"
 
-for f in ../ld64/src/ld/*.c ../ld64/src/3rd/*.c ../ld64/src/3rd/**/*.c; do
+for f in ../ld64/src/ld/*.c ../ld64/src/3rd/*.c ; do
   echo "compiling $f"
   eval "clang -c $CFLAGS $f -o $(basename $f).o"
 done

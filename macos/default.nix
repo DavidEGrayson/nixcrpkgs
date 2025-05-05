@@ -75,11 +75,21 @@ let
     native_inputs = [ nixpkgs.python3 ];
   };
 
-  cctools_commit = "3ecb04b";  # 2023-01-24
-  cctools_apple_version = "973.0.1";  # from README.md
+  libdispatch = native.make_derivation rec {
+    name = "libdispatch-${version}";
+    version = "2f1ea48";
+    src = nixpkgs.fetchurl {
+      url = "https://github.com/swiftlang/swift-corelibs-libdispatch/archive/${version}.tar.gz";  # 2025-04-23
+      hash = "sha256-SyhjUY9hs4oO43gTzPn02hBtjVQZRx9fzbb5atyQVJs=";
+    };
+    builder = ./libdispatch_builder.sh;
+  };
+
+  cctools_commit = "9eaa9fb";  # 2025-05-02
+  cctools_apple_version = "1021.4";  # from README.md
   cctools_port_src = nixpkgs.fetchurl {
     url = "https://github.com/tpoechtrager/cctools-port/archive/${cctools_commit}.tar.gz";
-    hash = "sha256-ZGjOJD8rUPcldLmbRW2FDKj23IzpWwwM5wa+klMQCRE==";
+    hash = "sha256-yDegN19MyH0HbP9XTHBldS2W/XbrMAU2lD/0fIyJB7Y=";
   };
   cctools_patches = [
     # Fix a warning about returning a local variable.  A memory leak would
@@ -98,6 +108,7 @@ let
   ld = native.make_derivation rec {
     name = "cctools-ld64";
     apple_version = cctools_apple_version;
+    inherit libdispatch;
     src = cctools_port_src;
     patches = cctools_patches;
     builder = ./ld_builder.sh;
@@ -213,7 +224,7 @@ let
     global_license_set = { compiler_rt = "${compiler_rt}/LICENSE.txt"; };
 
     # Handy shortcuts.
-    inherit clang compiler_rt tapi ld misc ar sdk toolchain;
+    inherit clang compiler_rt tapi ld misc ar sdk toolchain libdispatch;
 
     # Build tools available on the PATH for every derivation.
     default_native_inputs = native.default_native_inputs
