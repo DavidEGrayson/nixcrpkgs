@@ -115,6 +115,10 @@ let
 
       # Fix warnings we get while building Qt.
       ./fix_warnings.patch
+
+      # macOS doesn't have fp.h (or at least, not easily)
+      # Latest version of libpng doesn't try to include fp.h
+      ./libpng.patch
     ];
 
     builder = ./builder.sh;
