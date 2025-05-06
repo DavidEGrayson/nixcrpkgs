@@ -20,11 +20,14 @@ let
   # macOS 11 is the first version to support ARM and it was released in 2020,
   # so it seems reasonable to specify it as the minimum version which various
   # tools ask for, but I'm not sure what all the implications are.
-  macos_version_min = "11.0";
+  # In 2025, we bumped this up to macOS 12.0, which was the first version to have
+  # the constant 'kIOMainPortDefault' used by libusbp, so this avoids some
+  # warnings when building libusbp.
+  macos_version_min = "12.0";
 
-  # This is the Darwin version corresponding to macOS 11.0 according to
+  # This is the Darwin version corresponding to macOS 12.0 according to
   # https://en.wikipedia.org/wiki/Darwin_(operating_system)
-  darwin_name = "darwin20.1";
+  darwin_name = "darwin21.0.1";
 
   host = "${arch}-apple-${darwin_name}";
 
