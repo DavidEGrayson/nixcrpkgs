@@ -99,6 +99,10 @@ let
 
       # Fix a warning that gets printed frequently.
       ./rect_warning.patch
+
+      # macOS doesn't have fp.h (or at least, not easily)
+      # Latest version of libpng doesn't try to include fp.h
+      ./libpng.patch
     ];
 
     # Try to silence a warning coming from qvariant.h.
