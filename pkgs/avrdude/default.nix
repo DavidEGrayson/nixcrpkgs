@@ -19,7 +19,7 @@ crossenv.make_derivation rec {
   patches = [ ./faster.patch ];
 
   native_inputs = [
-    crossenv.nixpkgs.yacc
+    crossenv.nixpkgs.bison
     crossenv.nixpkgs.flex
   ];
 
