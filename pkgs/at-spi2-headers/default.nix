@@ -5,7 +5,7 @@ let
     name = "at-spi2-headers";
 
     src = crossenv.nixpkgs.fetchgit {
-      url = "https://git.gnome.org/browse/at-spi2-core";
+      url = "https://gitlab.gnome.org/GNOME/at-spi2-core.git";
       rev = "e1d5412b33463fd2f45dea400c45b107d0c78f42";
       sha256 = "022k9yl65a5ak02283zhd8c73vnx8yc3siqj96qifwvdgd71ihb6";
     };
