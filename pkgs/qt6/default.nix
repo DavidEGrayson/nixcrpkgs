@@ -1,14 +1,14 @@
 { crossenv, libudev, xlibs, at-spi2-headers, dejavu-fonts }:
 
 let
-  version = "6.5.3";
+  version = "6.11.1";
   name = "qtbase-${version}";
 
   nixpkgs = crossenv.nixpkgs;
 
   base_src = crossenv.nixpkgs.fetchzip {
-    url = "https://download.qt.io/official_releases/qt/6.5/${version}/submodules/qtbase-everywhere-src-${version}.tar.xz";
-    hash = "sha256-iRv13GxSF89FWQCBAJwOEpXNsuc5rf9WxoFlNfrs9u0=";
+    url = "https://download.qt.io/official_releases/qt/6.11/${version}/submodules/qtbase-everywhere-src-${version}.tar.xz";
+    hash = "sha256-nxgDsPwIYViyzXab1rpCuL3fLhNi1+g0uHlyQJh7L20=";
   };
 
   # First build Qt for the host, which provides tools like moc and rcc.
@@ -16,7 +16,7 @@ let
     name = "qtbase-host-${version}";
 
     src = base_src;
-    patches = [ ./pwd.patch ];
+    patches = [];
 
     gcc_lib = nixpkgs.gccForLibs.lib;
     glibc = nixpkgs.glibc;
@@ -37,7 +37,6 @@ let
       "-no-feature-concurrent " +
       "-no-feature-gui " +
       "-no-feature-network " +
-      "-no-feature-qmake " +
       "-no-feature-sql " +
       "-no-feature-testlib " +
       "-no-feature-xml " +
@@ -68,9 +67,6 @@ let
 
     src = base_src;
     patches = [
-      # Don't use /bin/pwd.
-      ./pwd.patch
-
       # This fixes a linker error when building Qt for Linux, which is caused by
       # it not respecting the info in XCB's .pc files.
       # https://invent.kde.org/frameworks/extra-cmake-modules/-/merge_requests/327
@@ -114,11 +110,11 @@ let
       ./sse2.patch
 
       # Fix warnings we get while building Qt.
-      ./fix_warnings.patch
+      # TODO: ./fix_warnings.patch
 
       # macOS doesn't have fp.h (or at least, not easily)
       # Latest version of libpng doesn't try to include fp.h
-      ./libpng.patch
+      #./libpng.patch
     ];
 
     builder = ./builder.sh;
@@ -137,6 +133,7 @@ let
       "-no-shared -static " +
       (if crossenv.os == "linux" then
         "-xcb " +
+        "-submodules qtwayland " +
         "-no-opengl " +  # TODO: support OpenGL on Linux
         "-- " +
         "-DFEATURE_system_xcb_xinput=ON "

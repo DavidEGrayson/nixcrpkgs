@@ -10,4 +10,7 @@ includedir=\${prefix}/include
 Name: atspi
 Version: 2
 Cflags: -I\${includedir}
+Requires: glib-2.0
 EOF
+
+ln -s $glib/lib/pkgconfig/*.pc $out/lib/pkgconfig/
